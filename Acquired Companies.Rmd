@@ -1,0 +1,280 @@
+
+---
+title: "Acquired Companies"
+author: "Anshuman Moudgil"
+date: "16 June 2018"
+output:
+  html_document:
+    number_sections: true
+    toc: true
+    fig_width: 7
+    fig_height: 4.5
+    theme: readable
+    highlight: tango
+    code_folding: hide
+
+---
+
+Version update (14 July 2018)
+
+---------------------------------------------------------------
+Kaggle URL: https://www.kaggle.com/anshumoudgil/acquired-companies-today-s-products/notebook
+---------------------------------------------------------------
+# Introduction
+
+Companies Acquisitions Data - as of May 2018 - is quite interesting data. It furnished the list of companies who got acquired by one of the 7 companies like Apple, Facebook, Google, IBM, Microsoft, Twitter, and Yahoo!. Today we know those companies products by different names like Yahoo! 360°, Google's DeepMind, iTunes, iWorks, and Apple Maps etc.
+
+Merger & Acquisitions is not a new phenomenon. Here it data depicted only technology sector but it is spread across all 23 industry sectors. This notebook, as a function of data provided, will try to emphasize on which were the companies that got acquired and how we know them today. Lets read it further.
+
+## Libraries 
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+## Data
+
+It is a small data of 10 variables and 916 observations. Here is the glimpse of data. A small point to note: there are many cells that are empty in Value (USD) column as they have not been mentioned.
+
+```{r, warning=FALSE, message=FALSE}
+acq <- read.csv("../input/acquisitions.csv", header = TRUE)
+str(acq)
+```
+
+# First Look
+
+The graph below is the 1st look of data. It shows how the old players like IBM, Apple, Microsoft, and Yahoo had remained regular acquirers. New players like Facebook, Twitter and Google too started had acquiring just like their old peers.
+
+## Acquisitions - Year 
+
+The years from 2013 to 2015 remained most busy years for these 7 companies from acquisition point of view.
+
+```{r, warning=FALSE}
+acq %>% ggplot(aes(x = AcquisitionYear))+
+  geom_bar(aes(fill=ParentCompany))+
+  scale_fill_brewer(name="",palette='Paired')+
+  labs(title = "Companies Acquired vs. Year", x = "Year of Acquisition",y = "Number of companies acquired", subtitle = "7 Parent Companies")+
+  scale_x_reverse()+
+  theme_minimal()
+```
+
+## Acquisitions - Country of Origin 
+
+USA, Canada remained as biggest supplier of companies from technology point of view in Americas. In EU its United Kingdom, Germany, and France contributing the most. Israel - been promoted as start-up country - is placed at number 4 in overall hierarchy.
+
+As per graph below (restricted to only those business categories where 3 or more acquisitions were made) many renowned products either have different country of origin or products of different countries contributed towards their present avatar.
+
+```{r, warning=FALSE}
+acq$sign <- "{"
+TopicFreq <- acq %>% count(Business, sort = TRUE)
+colnames(TopicFreq)[2] <- "Bfreq"
+acq <- full_join(acq, TopicFreq, by = "Business")
+rm(TopicFreq)
+
+acq%>% filter(Bfreq > 2 &  Derived.products != "")%>% ggplot(aes(y= Derived.products, x = Country))+
+  geom_jitter(size=5, color="blue", fill=alpha("white", 0.01), alpha=0.45, shape=21, stroke=1)+
+  theme(axis.text.y = element_text(size=6.85))+
+  theme_minimal()+
+  labs(title = "Country of Origin of Derived Products", x = "County of Origin",y = "Derived Product", subtitle = "Transformed to great products")
+  
+```
+
+# Companies' lists 
+
+Each company has its own list of target companies. In following graphs I am trying to show only a small subset of complete data's list. 
+
+My criteria is most frequented Business Categories for acquisitions. If you (while analyzing) change the criteria then all these analysis will change or new thought would be required.
+
+## Apple
+
+```{r, warning=FALSE}
+App <- acq %>% filter(Derived.products != "") %>% filter(Bfreq >3) %>% filter(ParentCompany =="Apple")
+App <- App %>% arrange(AcquisitionYear)
+App$id <- seq(1, nrow(App))
+App$angle <- 90
+
+ggplot(App, aes(x=as.factor(id), y=0.5))+
+  geom_point(size=1, color="white", fill=alpha("white", 0.0001), alpha=0.01, shape=8, stroke=1)+
+  ylim(-20,20)+theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+  geom_text(data=App, aes(x=id, y= 5, label=Derived.products, hjust=0, vjust = 0.5), color="grey27", fontface="bold",alpha=0.72, size=3.75, angle= App$angle, inherit.aes = FALSE)+
+  geom_text(data=App, aes(x=id, y= -1.5, label=sign, hjust=0, vjust=0.5), color="grey27", alpha=0.72, size=9, angle=270, inherit.aes = FALSE)+
+  geom_text(data=App, aes(x=id, y= 0.5, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="grey27", alpha=0.81, size=3.25, angle=0, inherit.aes = FALSE)+
+  geom_text(data=App, aes(x=id, y= 3, label=Country, hjust=0.5, vjust=0.5), color="grey27", alpha=0.81, size=3.25, angle=0, inherit.aes = FALSE)+
+  geom_text(data=App, aes(x=id-0.175, y= -5, label=Company, hjust = 0), color="maroon4", fontface="bold",alpha=0.87, size=3.25, angle= App$angle+180, inherit.aes = FALSE)+
+  geom_text(data=App, aes(x=id+0.175, y= -5, label=Business, hjust = 0), color="blue4", fontface="bold",alpha=0.9, size=3.25, angle= App$angle+180, inherit.aes = FALSE)+
+  labs(title = "Apple", x="Acquired company's name & original Business",y="Transformed to Product", subtitle = "Apple's present day products, preceded by Year & Country of Origin")
+```
+
+## Facebook
+
+```{r, warning=FALSE}
+
+FB <- acq %>% filter(Bfreq >1) %>% filter(ParentCompany =="Facebook")
+FB <- FB %>% arrange(AcquisitionYear)
+FB$id <- seq(1, nrow(FB))
+FB$angle <- 90
+
+ggplot(FB, aes(x=as.factor(id), y=0.5))+
+  geom_point(size=1, color="white", fill=alpha("white", 0.0001), alpha=0.01, shape=8, stroke=1)+
+  ylim(-20,20)+theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+  geom_text(data=FB, aes(x=id, y= 5, label="...Facebook", hjust=0, vjust = 0.5), color="blue4", fontface="bold",alpha=0.72, size=3.75, angle= FB$angle, inherit.aes = FALSE)+
+  geom_text(data=FB, aes(x=id, y= -1.5, label=sign, hjust=0, vjust=0.5), color="blue4", alpha=0.72, size=9, angle=270, inherit.aes = FALSE)+
+  geom_text(data=FB, aes(x=id, y= 0.5, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="blue4", alpha=0.81, size=3.25, angle=0, inherit.aes = FALSE)+
+  geom_text(data=FB, aes(x=id, y= 3, label=Country, hjust=0.5, vjust=0.5), color="blue4", alpha=0.81, size=3.25, angle=0, inherit.aes = FALSE)+
+  geom_text(data=FB, aes(x=id-0.175, y= -5, label=Company, hjust = 0), color="red", fontface="bold",alpha=0.87, size=3.25, angle= FB$angle+180, inherit.aes = FALSE)+
+  geom_text(data=FB, aes(x=id+0.175, y= -5, label=Business, hjust = 0), color="green4", fontface="bold",alpha=0.9, size=3.25, angle= FB$angle+180, inherit.aes = FALSE)+
+  labs(title = "Facebook", x="Acquired company's name & original Business",y="Transformed to Product", subtitle = "Facebook's present day products, preceded by Year & Country of Origin")
+```
+
+## Google
+
+```{r, warning=FALSE}
+
+Goo <- acq %>% filter(Derived.products != "") %>% filter(Bfreq >3) %>% filter(ParentCompany =="Google")
+Goo <- Goo %>% arrange(AcquisitionYear)
+Goo$id <- seq(1, nrow(Goo))
+Goo$angle <- 90
+
+ggplot(Goo, aes(x=as.factor(id), y=6))+
+  geom_point(size=3, color="red", fill=alpha("lemonchiffon", 0.63), alpha=0.81, shape=21, stroke=1)+
+   ylim(-20,20)+theme_minimal()+
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+  geom_text(data=Goo, aes(x=id, y= 8, label=Derived.products, hjust=0), color="black", alpha=0.72, size=3, angle= Goo$angle, inherit.aes = FALSE)+
+  geom_text(data=Goo, aes(x=id, y= 1.5, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="black", alpha=0.81, size=2.5, angle=Goo$angle, inherit.aes = FALSE)+
+  geom_text(data=Goo, aes(x=id, y= -4, label=Country, hjust=0.5, vjust=0.5), color="black", alpha=0.81, size=2.5, angle=0, inherit.aes = FALSE)+
+  geom_text(data=Goo, aes(x=id-0.175, y= -6, label=Company, hjust = 0), color="maroon4", fontface="bold",alpha=0.87, size=2.5, angle= Goo$angle+180, inherit.aes = FALSE)+
+  geom_text(data=Goo, aes(x=id+0.175, y= -6, label=Business, hjust = 0), color="blue4", fontface="bold",alpha=0.9, size=2.5, angle= Goo$angle+180, inherit.aes = FALSE)+
+  labs(title = "Google", x="Acquired company's name & original Business",y="Transformed to Product", subtitle = "Google's present day products, preceded by Country of Origin & Year")
+```
+
+## IBM
+
+```{r, warning=FALSE}
+
+IBM <- acq %>% filter(Bfreq >2) %>% filter(ParentCompany =="IBM")
+IBM <- IBM %>% arrange(AcquisitionYear)
+IBM$id <- seq(1, nrow(IBM))
+IBM$angle <- 90
+
+ggplot(IBM, aes(x=as.factor(id), y=0.5))+
+  geom_point(size=3, color="cornflowerblue", fill=alpha("cornflowerblue", 0.0001), alpha=0.95, shape=8, stroke=1)+
+  ylim(-20,20)+theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+  geom_text(data=IBM, aes(x=12, y= 16.5, label="IBM's Products", hjust=0), color="cornflowerblue",alpha=0.95, size=6, angle= IBM$angle-90, inherit.aes = FALSE)+
+  geom_text(data=IBM, aes(x=id, y= 10, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="cornflowerblue", alpha=0.95, size=3.25, angle=IBM$angle, inherit.aes = FALSE)+
+  geom_text(data=IBM, aes(x=id, y= 4.5, label=Country, hjust=0.5, vjust=0.5), color="cornflowerblue", alpha=0.95, size=2.5, angle=0, inherit.aes = FALSE)+
+  geom_text(data=IBM, aes(x=id-0.175, y= -3, label=Company, hjust = 0), color="maroon4", fontface="bold",alpha=0.87, size=2.5, angle= IBM$angle+180, inherit.aes = FALSE)+
+  geom_text(data=IBM, aes(x=id+0.175, y= -3, label=Business, hjust = 0), color="blue4", fontface="bold",alpha=0.9, size=2.5, angle= IBM$angle+180, inherit.aes = FALSE)+
+  labs(title = "IBM", x="Acquired company's name & original Business",y="Transformed to Product", subtitle = "IBM's present day products, preceded by Country of Origin & Year")
+```
+
+## Microsoft - I
+
+```{r, warning=FALSE}
+
+MS <- acq %>% filter(Bfreq >2) %>% filter(ParentCompany =="Microsoft") %>% filter(Business !="Software")
+MS <- MS %>% arrange(AcquisitionYear)
+MS$id <- seq(1, nrow(MS))
+MS$angle <- 90
+
+ggplot(MS, aes(x=as.factor(id), y=0))+
+  geom_point(size=3, color="slateblue4", fill=alpha("slateblue4", 0.63), alpha=1, shape=3, stroke=1)+
+  ylim(-20,20)+theme_minimal()+
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+geom_text(data=MS, aes(x=8, y= 18, label="Microsoft's Inventory", hjust=0), color="slateblue4",alpha=0.72, size=5, angle= MS$angle-90, inherit.aes = FALSE)+
+  geom_text(data=MS, aes(x=id, y= 10, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="black", alpha=0.72, size=3.25, angle=MS$angle, inherit.aes = FALSE)+
+  geom_text(data=MS, aes(x=id, y= 4.5, label=Country, hjust=0.5, vjust=0.5), color="black", alpha=0.72, size=2.75, angle=0, inherit.aes = FALSE)+
+  geom_text(data=MS, aes(x=id-0.175, y= -4, label=Company, hjust = 0), color="maroon", fontface="bold",alpha=0.87, size=2.75, angle= MS$angle+180, inherit.aes = FALSE)+
+  geom_text(data=MS, aes(x=id+0.175, y= -4, label=Business, hjust = 0), color="navyblue", fontface="bold",alpha=0.9, size=2.75, angle= MS$angle+180, inherit.aes = FALSE)+
+  labs(title = "Microsoft", x="Acquired company's name & original Business",y="Transformed to Product", subtitle = "Microsoft acquired maximum businesses in Software category - the graph here is most but Software")
+```
+
+## Microsoft - II
+
+```{r, warning=FALSE}
+
+MS2 <- acq %>% filter(ParentCompany =="Microsoft") %>% filter(Value..USD. >125000000)
+
+MS2 <- MS2 %>% arrange(AcquisitionYear)
+MS2$id <- seq(1, nrow(MS2))
+MS2$angle <- 90
+
+ggplot(MS2, aes(x=as.factor(id), y=0))+
+  geom_point(size=3, color="slateblue", fill=alpha("slateblue", 0.63), alpha=0.81, shape=5, stroke=1)+
+  ylim(-20,20)+theme_minimal()+
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+  geom_text(data=MS2, aes(x=id, y= 6, label=Company, hjust=0), color="black",alpha=0.72, fontface="bold",size=3.5, angle= MS2$angle, inherit.aes = FALSE)+
+  geom_text(data=MS2, aes(x=id, y= 3.75, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="black", alpha=0.81, size=2.5, angle=0, inherit.aes = FALSE)+
+  geom_text(data=MS2, aes(x=id, y= -3.75, label=Country, hjust=0.5, vjust=0.5), color="black", alpha=0.81, size=2.5, angle=0, inherit.aes = FALSE)+
+  geom_text(data=MS2, aes(x=id, y= -6.5, label=Business, hjust = 0), color="blue4", fontface="bold",alpha=0.9, size=3, angle= MS2$angle+180, inherit.aes = FALSE)+
+  labs(title = "Microsoft's Billion Dollar Assests", x="Acquired company's original Business & Country",y="", subtitle = "Microsoft acquired them - in YEAR - and paid anything from x10^8 to x10^10")
+```
+
+## Twitter
+
+```{r, warning=FALSE}
+
+Twt <- acq %>% filter(ParentCompany =="Twitter") %>% filter(Derived.products!="")
+Twt <- Twt %>% arrange(Business)
+Twt$id <- seq(1, nrow(Twt))
+Twt$angle <- 90
+
+ggplot(Twt, aes(x=as.factor(id), y=0))+
+  geom_rug()+theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+  geom_text(data=Twt, aes(x=id, y= -0.3, label=Derived.products, hjust=0), color="royalblue", fontface="bold",alpha=0.92, size=3.5, angle= Twt$angle, inherit.aes = FALSE)+
+  geom_text(data=Twt, aes(x=id, y= -0.37, label=Country, hjust=0.5, vjust=0.5), color="royalblue", alpha=0.99, size=2.75, angle=0, inherit.aes = FALSE)+
+  geom_text(data=Twt, aes(x=id, y= -0.4, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="royalblue", alpha=0.99, size=2.75, angle=0, inherit.aes = FALSE)+
+  geom_text(data=Twt, aes(x=id-0.175, y= -0.325, label=Company, hjust = 0), color="maroon", fontface="bold",alpha=0.87, size=2.75, angle= Twt$angle, inherit.aes = FALSE)+
+  geom_text(data=Twt, aes(x=id+0.175, y= -0.325, label=Business, hjust = 0), color="navyblue", fontface="bold",alpha=0.9, size=2.75, angle= Twt$angle, inherit.aes = FALSE)+
+  labs(title = "Twitter", x="Acquired company's name (in maroon) & original Business (in blue)",y="Transformed to...", subtitle = "Twitter's present day products, preceded by Year & Country of Origin")
+```
+
+## Yahoo!
+
+```{r, warning=FALSE}
+
+Yah <- acq %>% filter(Bfreq >2) %>% filter(ParentCompany =="Yahoo")
+Yah <- Yah %>% arrange(AcquisitionYear)
+Yah$id <- seq(1, nrow(Yah))
+Yah$angle <- 90
+
+ggplot(Yah, aes(x=as.factor(id), y=0.5))+
+  geom_point(size=1, color="white", fill=alpha("white", 0.0001), alpha=0.01, shape=8, stroke=1)+
+  ylim(-20,20)+theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    panel.grid = element_blank())+
+  geom_text(data=Yah, aes(x=id, y= 5, label=Derived.products, hjust=0, vjust = 0.5), color="darkorchid4", fontface="bold",alpha=0.81, size=3.75, angle= Yah$angle, inherit.aes = FALSE)+ 
+  geom_text(data=Yah, aes(x=id, y= -1.5, label=sign, hjust=0, vjust=0.5), color="darkorchid4", alpha=0.81, size=9, angle=270, inherit.aes = FALSE)+
+  geom_text(data=Yah, aes(x=id, y= 0.5, label=AcquisitionYear, hjust=0.5, vjust=0.5), color="darkorchid4", alpha=0.81, size=3.25, angle=0, inherit.aes = FALSE)+
+  geom_text(data=Yah, aes(x=id, y= 3, label=Country, hjust=0.5, vjust=0.5), color="darkorchid4", alpha=0.81, size=3.25, angle=0, inherit.aes = FALSE)+
+  geom_text(data=Yah, aes(x=id-0.175, y= -5, label=Company, hjust = 0), color="maroon", fontface="bold",alpha=0.87, size=3.25, angle= Yah$angle+180, inherit.aes = FALSE)+
+  geom_text(data=Yah, aes(x=id+0.175, y= -5, label=Business, hjust = 0), color="navyblue", fontface="bold",alpha=0.9, size=3.25, angle= Yah$angle+180, inherit.aes = FALSE)+
+  labs(title = "Yahoo!", x="Acquired company's name & original Business",y="Transformed to Product", subtitle = "Yahoo's today's products, preceded by Year & Country of Origin")
+```
+
+
+# Conclusion
+
+Acquisition of companies (big, small, or start-ups) is one of the ways for a given company to grow. The objective behind acquisition can be anything like revenue growth, market access, technological know-how, or talent etc. It's not limited to one sector or a geography. In this notebook only 7 technology companies had been mentioned, but there are many more. Hope by reading these graphs you may easily recall in future which company was acquired by whom and by what name we know them today. 
+
+Hope you enjoyed reading and data presentation. Please do up-vote  and or write a comment to share your opinions.
+
+Thanks
